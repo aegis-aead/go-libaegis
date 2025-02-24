@@ -1,3 +1,0 @@
-[submodule "common/libaegis"]
-	path = common/libaegis
-	url = https://github.com/aegis-aead/libaegis

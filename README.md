@@ -44,7 +44,10 @@ func main() {
     associatedData := []byte("metadata")
 
     // tag size can be 16 or 32 bytes
-    aead := aegis128x2.New(key, 16)
+    aead, err := aegis128x2.New(key, 16)
+    if err != nil {
+        panic(err)
+    }
 
     ciphertext := aead.Seal(nil, nonce, plaintext, associatedData)
 

@@ -1,0 +1,99 @@
+package aegis256x4
+
+// #include <aegis.h>
+// #cgo CFLAGS: -I../common/libaegis/src/include
+import "C"
+
+import (
+	"crypto/cipher"
+
+	"github.com/jedisct1/go-libaegis/common"
+)
+
+const (
+	KeySize   = 32
+	NonceSize = 32
+)
+
+type Aegis256X4 struct {
+	common.Aegis
+}
+
+// The nonce size, in bytes.
+func (aead *Aegis256X4) NonceSize() int {
+	return NonceSize
+}
+
+// New returns a new AEAD that uses the provided key and tag length.
+// The key must be 32 bytes long.
+// The tag length must be 16 or 32.
+func New(key []byte, tagLen int) (cipher.AEAD, error) {
+	if len(key) != KeySize {
+		return nil, common.ErrBadKeyLength
+	}
+	if tagLen != 16 && tagLen != 32 {
+		return nil, common.ErrBadTagLength
+	}
+	a := new(Aegis256X4)
+	a.TagLen = tagLen
+	a.Key = key
+	return a, nil
+}
+
+func (aead *Aegis256X4) Seal(dst, nonce, cleartext, additionalData []byte) []byte {
+	if len(nonce) != aead.NonceSize() {
+		panic("aegis: invalid nonce length")
+	}
+	outLen := len(cleartext) + aead.TagLen
+	var buf []byte
+	inplace := false
+	if cap(dst)-len(dst) >= outLen {
+		inplace = true
+		buf = dst[len(dst) : len(dst)+outLen]
+	} else {
+		buf = make([]byte, outLen)
+	}
+	res := C.aegis256x4_encrypt((*C.uchar)(&buf[0]), C.size_t(aead.TagLen), slicePointerOrNull(cleartext),
+		C.size_t(len(cleartext)), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
+	if res != 0 {
+		panic("encryption failed")
+	}
+	if inplace {
+		return dst[:len(dst)+outLen]
+	}
+	return append(dst, buf...)
+}
+
+func (aead *Aegis256X4) Open(plaintext, nonce, ciphertext, additionalData []byte) ([]byte, error) {
+	if len(nonce) != aead.NonceSize() {
+		return nil, common.ErrBadNonceLength
+	}
+	if len(ciphertext) < aead.TagLen {
+		return nil, common.ErrTruncated
+	}
+	outLen := len(ciphertext) - aead.TagLen
+	var buf []byte
+	inplace := false
+	if cap(plaintext)-len(plaintext) >= outLen {
+		inplace = true
+		buf = plaintext[len(plaintext) : len(plaintext)+outLen]
+	} else {
+		buf = make([]byte, len(ciphertext)-aead.TagLen)
+	}
+	res := C.aegis256x4_decrypt((*C.uchar)(&buf[0]), slicePointerOrNull(ciphertext),
+		C.size_t(len(ciphertext)), C.size_t(aead.TagLen), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
+	if res != 0 {
+		return nil, common.ErrAuth
+	}
+	if inplace {
+		return plaintext[:len(plaintext)+outLen], nil
+	}
+	return append(plaintext, buf...), nil
+}
+
+func slicePointerOrNull(s []byte) (ptr *C.uchar) {
+	if len(s) == 0 {
+		return
+	}
+	return (*C.uchar)(&s[0])
+}

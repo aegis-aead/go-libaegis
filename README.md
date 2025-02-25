@@ -60,17 +60,10 @@ func main() {
 }
 ```
 
-## API Reference
-
-- `Encrypt(plaintext, associatedData, nonce, key []byte) ([]byte, error)`
-- `Decrypt(ciphertext, associatedData, nonce, key []byte) ([]byte, error)`
-- `KeySize` (constant): Size of the encryption key in bytes.
-- `NonceSize` (constant): Size of the nonce in bytes.
-
 ## Requirements
 
 - Go 1.16+
-- A C compiler
+- A C toolchain
 
 ## License
 

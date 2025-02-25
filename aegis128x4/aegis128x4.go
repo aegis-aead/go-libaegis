@@ -83,7 +83,7 @@ func (aead *Aegis128X4) Open(plaintext, nonce, ciphertext, additionalData []byte
 	} else {
 		buf = make([]byte, len(ciphertext)-aead.TagLen)
 	}
-	res := C.aegis128x4_decrypt((*C.uchar)(&buf[0]), slicePointerOrNull(ciphertext),
+	res := C.aegis128x4_decrypt(slicePointerOrNull(buf), (*C.uchar)(&ciphertext[0]),
 		C.size_t(len(ciphertext)), C.size_t(aead.TagLen), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
 	if res != 0 {
 		return nil, common.ErrAuth

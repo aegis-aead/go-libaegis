@@ -1,9 +1,9 @@
 # go-libaegis
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/jedisct1/go-libaegis.svg)](https://pkg.go.dev/github.com/jedisct1/go-libaegis)
-[![License](https://img.shields.io/github/license/jedisct1/go-libaegis)](https://github.com/jedisct1/go-libaegis/blob/main/LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/aegis-aead/go-libaegis.svg)](https://pkg.go.dev/github.com/aegis-aead/go-libaegis)
+[![License](https://img.shields.io/github/license/aegis-aead/go-libaegis)](https://github.com/aegis-aead/go-libaegis/blob/main/LICENSE)
 
-A Go binding for [libaegis](https://github.com/jedisct1/libaegis), implementing [the AEGIS family](https://datatracker.ietf.org/doc/draft-irtf-cfrg-aegis-aead/) of modern authenticated encryption algorithms designed for high performance and security.
+A Go binding for [libaegis](https://github.com/aegis-aead/libaegis), implementing [the AEGIS family](https://datatracker.ietf.org/doc/draft-irtf-cfrg-aegis-aead/) of modern authenticated encryption algorithms designed for high performance and security.
 
 ## Features
 
@@ -17,7 +17,7 @@ A Go binding for [libaegis](https://github.com/jedisct1/libaegis), implementing 
 To install `go-libaegis`, use:
 
 ```sh
-go get github.com/jedisct1/go-libaegis
+go get github.com/aegis-aead/go-libaegis
 ```
 
 ## Usage
@@ -30,7 +30,7 @@ import (
     "fmt"
     // other options:
     // aegis128l, aegis128x4, aegis256, aegis256x2, aegis256x4    
-    "github.com/jedisct1/go-libaegis/aegis128x2"
+    "github.com/aegis-aead/go-libaegis/aegis128x2"
 )
 
 func main() {

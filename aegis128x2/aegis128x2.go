@@ -7,7 +7,7 @@ import "C"
 import (
 	"crypto/cipher"
 
-	"github.com/jedisct1/go-libaegis/common"
+	"github.com/aegis-aead/go-libaegis/common"
 )
 
 const (

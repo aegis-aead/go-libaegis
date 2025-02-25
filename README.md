@@ -76,3 +76,7 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 ## Security Notice
 
 Always ensure that you use randomly generated keys and unique nonces when using authenticated encryption to maintain security.
+
+### Alternatives in Go
+
+- [`github.com/ericlagergren/aegis`](https://github.com/ericlagergren/aegis) implements AEGIS-128L and AEGIS-256 without the need for CGO.

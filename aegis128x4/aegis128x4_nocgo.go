@@ -1,5 +1,5 @@
-//go:build !cgo
-// +build !cgo
+//go:build !cgo || !go1.19
+// +build !cgo !go1.19
 
 package aegis128x4
 

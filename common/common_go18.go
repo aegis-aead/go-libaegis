@@ -3,4 +3,5 @@
 
 package common
 
+// #cgo CFLAGS: -Ilibaegis/src/include
 import "C"

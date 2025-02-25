@@ -13,6 +13,8 @@ const (
 )
 
 type Aegis struct {
+	Key    []byte
+	TagLen int
 	cipher.AEAD
 }
 

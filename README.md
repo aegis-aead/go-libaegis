@@ -3,7 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/jedisct1/go-libaegis.svg)](https://pkg.go.dev/github.com/jedisct1/go-libaegis)
 [![License](https://img.shields.io/github/license/jedisct1/go-libaegis)](https://github.com/jedisct1/go-libaegis/blob/main/LICENSE)
 
-A Go binding for [libaegis](https://github.com/jedisct1/libaegis), implementing a family of fast and modern authenticated encryption algorithms designed for high performance and security.
+A Go binding for [libaegis](https://github.com/jedisct1/libaegis), implementing [the AEGIS family](https://datatracker.ietf.org/doc/draft-irtf-cfrg-aegis-aead/) of modern authenticated encryption algorithms designed for high performance and security.
 
 ## Features
 

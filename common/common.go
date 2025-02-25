@@ -1,5 +1,5 @@
-//go:build cgo
-// +build cgo
+//go:build cgo && go1.19
+// +build cgo,go1.19
 
 package common
 
@@ -37,8 +37,4 @@ var (
 
 func init() {
 	C.aegis_init()
-}
-
-func NotAvailable() {
-	panic("cgo is broken on this Go version")
 }

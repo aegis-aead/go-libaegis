@@ -3,9 +3,14 @@ package aegis128x2
 import (
 	"crypto/rand"
 	"fmt"
+
+	"github.com/aegis-aead/go-libaegis/common"
 )
 
 func Example() {
+	if !common.Available {
+		return
+	}
 	key := make([]byte, KeySize)
 	rand.Read(key)
 	aead, err := New(key, 16)

@@ -1,3 +1,6 @@
+//go:build cgo
+// +build cgo
+
 package aegis128l
 
 // #include <aegis.h>

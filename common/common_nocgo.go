@@ -55,10 +55,6 @@ var (
 	ErrBadTagLength   = fmt.Errorf("invalid tag length")
 )
 
-func init() {
-	NotAvailable()
-}
-
 func NotAvailable() {
 	panic("cgo is required to use AEGIS")
 }

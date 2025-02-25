@@ -24,11 +24,6 @@ func (aead *Aegis) Overhead() int {
 	return 0
 }
 
-// Wipe clears the key from memory (best-effort)
-func (aead *Aegis) Wipe() {
-	NotAvailable()
-}
-
 func (aead *Aegis) NonceSize() int {
 	NotAvailable()
 	return 0

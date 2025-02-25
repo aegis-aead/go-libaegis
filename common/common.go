@@ -2,6 +2,7 @@ package common
 
 import (
 	"crypto/cipher"
+	"crypto/subtle"
 	"fmt"
 )
 
@@ -18,6 +19,12 @@ type Aegis struct {
 // The overhead of the AEAD, in bytes, corresponding to the length of the tag.
 func (aead *Aegis) Overhead() int {
 	return aead.TagLen
+}
+
+// Wipe clears the key from memory (best-effort)
+func (aead *Aegis) Wipe() {
+	subtle.XORBytes(aead.Key, aead.Key, aead.Key)
+	aead.TagLen = 0
 }
 
 var (

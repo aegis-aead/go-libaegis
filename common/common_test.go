@@ -7,4 +7,5 @@ func TestOverhead(t *testing.T) {
 	if aead.Overhead() != aead.TagLen {
 		panic("Unexpected overhead")
 	}
+	aead.Wipe()
 }

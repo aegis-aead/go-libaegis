@@ -44,8 +44,12 @@ func New(key []byte, tagLen int) (cipher.AEAD, error) {
 }
 
 func (aead *Aegis128X4) Seal(dst, nonce, cleartext, additionalData []byte) []byte {
-	if len(nonce) != aead.NonceSize() {
+	nonceLen := len(nonce)
+	if nonceLen > aead.NonceSize() {
 		panic("aegis: invalid nonce length")
+	}
+	if nonceLen < aead.NonceSize() {
+		nonce = append(nonce, make([]byte, aead.NonceSize()-nonceLen)...)
 	}
 	outLen := len(cleartext) + aead.TagLen
 	var buf []byte
@@ -68,8 +72,12 @@ func (aead *Aegis128X4) Seal(dst, nonce, cleartext, additionalData []byte) []byt
 }
 
 func (aead *Aegis128X4) Open(plaintext, nonce, ciphertext, additionalData []byte) ([]byte, error) {
-	if len(nonce) != aead.NonceSize() {
-		return nil, common.ErrBadNonceLength
+	nonceLen := len(nonce)
+	if nonceLen > aead.NonceSize() {
+		panic("aegis: invalid nonce length")
+	}
+	if nonceLen < aead.NonceSize() {
+		nonce = append(nonce, make([]byte, aead.NonceSize()-nonceLen)...)
 	}
 	if len(ciphertext) < aead.TagLen {
 		return nil, common.ErrTruncated

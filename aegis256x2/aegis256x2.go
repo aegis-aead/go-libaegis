@@ -60,6 +60,9 @@ func (aead *Aegis256X2) Seal(dst, nonce, cleartext, additionalData []byte) []byt
 	} else {
 		buf = make([]byte, outLen)
 	}
+	if common.InexactOverlap(buf, cleartext) {
+		panic("aegis: invalid buffer overlap")
+	}
 	res := C.aegis256x2_encrypt((*C.uchar)(&buf[0]), C.size_t(aead.TagLen), slicePointerOrNull(cleartext),
 		C.size_t(len(cleartext)), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
 	if res != 0 {
@@ -90,6 +93,9 @@ func (aead *Aegis256X2) Open(plaintext, nonce, ciphertext, additionalData []byte
 		buf = plaintext[len(plaintext) : len(plaintext)+outLen]
 	} else {
 		buf = make([]byte, len(ciphertext)-aead.TagLen)
+	}
+	if common.InexactOverlap(buf, ciphertext) {
+		panic("aegis: invalid buffer overlap")
 	}
 	res := C.aegis256x2_decrypt(slicePointerOrNull(buf), (*C.uchar)(&ciphertext[0]),
 		C.size_t(len(ciphertext)), C.size_t(aead.TagLen), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))

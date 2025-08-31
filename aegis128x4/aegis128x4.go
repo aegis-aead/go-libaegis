@@ -52,23 +52,13 @@ func (aead *Aegis128X4) Seal(dst, nonce, cleartext, additionalData []byte) []byt
 		nonce = append(nonce, make([]byte, aead.NonceSize()-nonceLen)...)
 	}
 	outLen := len(cleartext) + aead.TagLen
-	var buf []byte
-	inplace := false
-	if cap(dst)-len(dst) >= outLen {
-		inplace = true
-		buf = dst[len(dst) : len(dst)+outLen]
-	} else {
-		buf = make([]byte, outLen)
-	}
+	full, buf := sliceGrowOrNew(dst, outLen)
 	res := C.aegis128x4_encrypt((*C.uchar)(&buf[0]), C.size_t(aead.TagLen), slicePointerOrNull(cleartext),
 		C.size_t(len(cleartext)), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
 	if res != 0 {
 		panic("encryption failed")
 	}
-	if inplace {
-		return dst[:len(dst)+outLen]
-	}
-	return append(dst, buf...)
+	return full
 }
 
 func (aead *Aegis128X4) Open(plaintext, nonce, ciphertext, additionalData []byte) ([]byte, error) {
@@ -83,23 +73,13 @@ func (aead *Aegis128X4) Open(plaintext, nonce, ciphertext, additionalData []byte
 		return nil, common.ErrTruncated
 	}
 	outLen := len(ciphertext) - aead.TagLen
-	var buf []byte
-	inplace := false
-	if cap(plaintext)-len(plaintext) >= outLen {
-		inplace = true
-		buf = plaintext[len(plaintext) : len(plaintext)+outLen]
-	} else {
-		buf = make([]byte, len(ciphertext)-aead.TagLen)
-	}
+	full, buf := sliceGrowOrNew(plaintext, outLen)
 	res := C.aegis128x4_decrypt(slicePointerOrNull(buf), (*C.uchar)(&ciphertext[0]),
 		C.size_t(len(ciphertext)), C.size_t(aead.TagLen), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
 	if res != 0 {
 		return nil, common.ErrAuth
 	}
-	if inplace {
-		return plaintext[:len(plaintext)+outLen], nil
-	}
-	return append(plaintext, buf...), nil
+	return full, nil
 }
 
 func slicePointerOrNull(s []byte) (ptr *C.uchar) {
@@ -107,4 +87,14 @@ func slicePointerOrNull(s []byte) (ptr *C.uchar) {
 		return
 	}
 	return (*C.uchar)(&s[0])
+}
+
+func sliceGrowOrNew(s []byte, l int) (full, tail []byte) {
+	if cap(s)-len(s) >= l {
+		return s[:len(s)+l], s[len(s) : len(s)+l]
+	} else {
+		n := make([]byte, len(s)+l)
+		copy(n, s)
+		return n, n[len(s):]
+	}
 }

@@ -51,6 +51,15 @@ func (aead *Aegis256X2) Seal(dst, nonce, cleartext, additionalData []byte) []byt
 	if nonceLen < aead.NonceSize() {
 		nonce = append(nonce, make([]byte, aead.NonceSize()-nonceLen)...)
 	}
+
+	// Check for buffer overlap per cipher.AEAD requirements
+	if common.InexactOverlap(dst, cleartext) {
+		panic("aegis: invalid buffer overlap of output and plaintext")
+	}
+	if common.InexactOverlap(dst, additionalData) {
+		panic("aegis: invalid buffer overlap of output and additional data")
+	}
+
 	outLen := len(cleartext) + aead.TagLen
 	var buf []byte
 	inplace := false
@@ -82,6 +91,15 @@ func (aead *Aegis256X2) Open(plaintext, nonce, ciphertext, additionalData []byte
 	if len(ciphertext) < aead.TagLen {
 		return nil, common.ErrTruncated
 	}
+
+	// Check for buffer overlap per cipher.AEAD requirements
+	if common.InexactOverlap(plaintext, ciphertext) {
+		panic("aegis: invalid buffer overlap of output and ciphertext")
+	}
+	if common.InexactOverlap(plaintext, additionalData) {
+		panic("aegis: invalid buffer overlap of output and additional data")
+	}
+
 	outLen := len(ciphertext) - aead.TagLen
 	var buf []byte
 	inplace := false

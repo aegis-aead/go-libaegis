@@ -76,22 +76,21 @@ aegis128x2_update(aes_block_t *const state, const aes_block_t d1, const aes_bloc
 #    include "aegis128x2_common.h"
 
 struct aegis128x2_implementation aegis128x2_soft_implementation = {
-    .encrypt_detached              = encrypt_detached,
-    .decrypt_detached              = decrypt_detached,
-    .encrypt_unauthenticated       = encrypt_unauthenticated,
-    .decrypt_unauthenticated       = decrypt_unauthenticated,
-    .stream                        = stream,
-    .state_init                    = state_init,
-    .state_encrypt_update          = state_encrypt_update,
-    .state_encrypt_detached_final  = state_encrypt_detached_final,
-    .state_encrypt_final           = state_encrypt_final,
-    .state_decrypt_detached_update = state_decrypt_detached_update,
-    .state_decrypt_detached_final  = state_decrypt_detached_final,
-    .state_mac_init                = state_mac_init,
-    .state_mac_update              = state_mac_update,
-    .state_mac_final               = state_mac_final,
-    .state_mac_reset               = state_mac_reset,
-    .state_mac_clone               = state_mac_clone,
+    .encrypt_detached        = encrypt_detached,
+    .decrypt_detached        = decrypt_detached,
+    .encrypt_unauthenticated = encrypt_unauthenticated,
+    .decrypt_unauthenticated = decrypt_unauthenticated,
+    .stream                  = stream,
+    .state_init              = state_init,
+    .state_encrypt_update    = state_encrypt_update,
+    .state_encrypt_final     = state_encrypt_final,
+    .state_decrypt_update    = state_decrypt_update,
+    .state_decrypt_final     = state_decrypt_final,
+    .state_mac_init          = state_mac_init,
+    .state_mac_update        = state_mac_update,
+    .state_mac_final         = state_mac_final,
+    .state_mac_reset         = state_mac_reset,
+    .state_mac_clone         = state_mac_clone,
 };
 
 #endif

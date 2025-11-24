@@ -21,8 +21,9 @@ extern "C" {
 #define aegis128l_ABYTES_MAX 32
 
 /*
- * When using AEGIS in incremental mode, this is the maximum number
- * of leftover ciphertext bytes that can be returned at finalization.
+ * Maximum number of leftover bytes at finalization (always 0).
+ * This constant is kept for backwards compatibility but is no longer needed
+ * since update functions now output data immediately without buffering.
  */
 #define aegis128l_TAILBYTES_MAX 31
 
@@ -49,8 +50,9 @@ size_t aegis128l_abytes_min(void);
 size_t aegis128l_abytes_max(void);
 
 /*
- * When using AEGIS in incremental mode, this is the maximum number
- * of leftover ciphertext bytes that can be returned at finalization.
+ * Maximum number of leftover bytes at finalization (always 0).
+ * This function is kept for backwards compatibility but always returns 31.
+ * Update functions now output data immediately without buffering.
  */
 size_t aegis128l_tailbytes_max(void);
 
@@ -72,7 +74,7 @@ int aegis128l_encrypt_detached(uint8_t *c, uint8_t *mac, size_t maclen, const ui
                                const uint8_t *k);
 
 /*
- * Decrypt a message with AEGIS in one shot mode, returning the tag and the ciphertext separately.
+ * Decrypt a message with AEGIS in one shot mode with a detached tag.
  *
  * m: plaintext output buffer
  * c: ciphertext input buffer
@@ -140,79 +142,55 @@ void aegis128l_state_init(aegis128l_state *st_, const uint8_t *ad, size_t adlen,
  * The same function can be used regardless of whether the tag will be attached or not.
  *
  * st_: state to update
- * c: ciphertext output buffer
- * clen_max: length of the ciphertext chunk buffer (must be >= mlen)
- * written: number of ciphertext bytes actually written
+ * c: ciphertext output buffer (must be at least mlen bytes)
  * m: plaintext input buffer
  * mlen: length of the plaintext
  *
  * Return 0 on success, -1 on failure.
  */
-int aegis128l_state_encrypt_update(aegis128l_state *st_, uint8_t *c, size_t clen_max,
-                                   size_t *written, const uint8_t *m, size_t mlen);
+int aegis128l_state_encrypt_update(aegis128l_state *st_, uint8_t *c, const uint8_t *m, size_t mlen);
 
 /*
  * Finalize the incremental encryption and generate the authentication tag.
  *
  * st_: state to finalize
- * c: output buffer for the final ciphertext chunk
- * clen_max: length of the ciphertext chunk buffer (must be >= remaining bytes)
- * written: number of ciphertext bytes actually written
- * mac: authentication tag output buffer
+ * mac: output buffer for the authentication tag
  * maclen: length of the authentication tag to generate (16 or 32)
  *
  * Return 0 on success, -1 on failure.
  */
-int aegis128l_state_encrypt_detached_final(aegis128l_state *st_, uint8_t *c, size_t clen_max,
-                                           size_t *written, uint8_t *mac, size_t maclen);
-
-/*
- * Finalize the incremental encryption and attach the authentication tag
- * to the final ciphertext chunk.
- *
- * st_: state to finalize
- * c: output buffer for the final ciphertext chunk
- * clen_max: length of the ciphertext chunk buffer (must be >= remaining bytes+maclen)
- * written: number of ciphertext bytes actually written
- * maclen: length of the authentication tag to generate (16 or 32)
- *
- * Return 0 on success, -1 on failure.
- */
-int aegis128l_state_encrypt_final(aegis128l_state *st_, uint8_t *c, size_t clen_max,
-                                  size_t *written, size_t maclen);
+int aegis128l_state_encrypt_final(aegis128l_state *st_, uint8_t *mac, size_t maclen);
 
 /*
  * Decrypt a message chunk.
  *
- * The output should never be released to the caller until the tag has been verified.
+ * The decrypted message must not be used until state_decrypt_final() has been
+ * called and returns successfully.
  *
  * st_: state to update
- * m: plaintext output buffer
- * mlen_max: length of the plaintext chunk buffer (must be >= clen)
- * written: number of plaintext bytes actually written
+ * m: plaintext output buffer (must be at least clen bytes)
  * c: ciphertext chunk input buffer
  * clen: length of the ciphertext chunk
  *
  * Return 0 on success, -1 on failure.
  */
-int aegis128l_state_decrypt_detached_update(aegis128l_state *st_, uint8_t *m, size_t mlen_max,
-                                            size_t *written, const uint8_t *c, size_t clen)
+int aegis128l_state_decrypt_update(aegis128l_state *st_, uint8_t *m, const uint8_t *c, size_t clen)
     __attribute__((warn_unused_result));
 
 /*
- * Decrypt the final message chunk and verify the authentication tag.
+ * Finalize the incremental decryption and verify the authentication tag.
+ *
+ * This function verifies the authentication tag. It must be called after all
+ * decryption updates, and the decrypted message must not be used until this
+ * function returns successfully.
  *
  * st_: state to finalize
- * m: plaintext output buffer
- * mlen_max: length of the plaintext chunk buffer (must be >= remaining bytes)
- * written: number of plaintext bytes actually written
  * mac: authentication tag input buffer
  * maclen: length of the authentication tag (16 or 32)
  *
- * Return 0 on success, -1 on failure.
+ * Return 0 if the tag is valid, -1 otherwise.
  */
-int aegis128l_state_decrypt_detached_final(aegis128l_state *st_, uint8_t *m, size_t mlen_max,
-                                           size_t *written, const uint8_t *mac, size_t maclen)
+int aegis128l_state_decrypt_final(aegis128l_state *st_, const uint8_t *mac, size_t maclen)
     __attribute__((warn_unused_result));
 
 /*
@@ -261,6 +239,7 @@ void aegis128l_decrypt_unauthenticated(uint8_t *m, const uint8_t *c, size_t clen
  *
  * st_: state to initialize
  * k: key input buffer (16 bytes)
+ * npub: nonce input buffer (16 bytes) - Can be set to `NULL` to use an all-zero nonce
  *
  * - The same key MUST NOT be used both for MAC and encryption.
  * - If the key is secret, the MAC is secure against forgery.
@@ -285,7 +264,7 @@ void aegis128l_mac_init(aegis128l_mac_state *st_, const uint8_t *k, const uint8_
  *
  * This function can be called multiple times.
  *
- * Once the full input has been absorb, call either `_mac_final` or `_mac_verify`.
+ * Once the full input has been absorbed, call either `_mac_final` or `_mac_verify`.
  */
 int aegis128l_mac_update(aegis128l_mac_state *st_, const uint8_t *m, size_t mlen);
 
@@ -310,7 +289,7 @@ int aegis128l_mac_final(aegis128l_mac_state *st_, uint8_t *mac, size_t maclen);
 int aegis128l_mac_verify(aegis128l_mac_state *st_, const uint8_t *mac, size_t maclen);
 
 /*
- * Reset an AEGIS_MAC state.
+ * Reset an AEGIS-MAC state.
  */
 void aegis128l_mac_reset(aegis128l_mac_state *st_);
 

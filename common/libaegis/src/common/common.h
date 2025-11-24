@@ -6,8 +6,8 @@
 
 #if defined(__wasm__) && !defined(__wasi__)
 static int errno;
-#    define memcpy(A, B, C) __builtin_memcpy((A), (B), (C));
-#    define memset(A, B, C) __builtin_memset((A), (B), (C));
+#    define memcpy(A, B, C) __builtin_memcpy((A), (B), (C))
+#    define memset(A, B, C) __builtin_memset((A), (B), (C))
 #else
 #    include <errno.h>
 #    include <stdlib.h>
@@ -27,7 +27,6 @@ static int errno;
 #    define HAVE_ANDROID_GETCPUFEATURES
 #endif
 #if defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_AMD64)
-
 #    define HAVE_CPUID
 #    define NATIVE_LITTLE_ENDIAN
 #    if defined(__clang__) || defined(__GNUC__)
@@ -44,6 +43,39 @@ static int errno;
 #            undef HAVE_VAESINTRIN_H
 #        endif
 #    endif
+
+/* target pragmas don't define these flags on clang-cl (an alternative clang driver for Windows) */
+#    if defined(__clang__) && defined(_MSC_BUILD) && defined(_MSC_VER) && \
+        (defined(_M_IX86) || defined(_M_AMD64)) && !defined(__SSE3__)
+#        undef __SSE3__
+#        undef __SSSE3__
+#        undef __SSE4_1__
+#        undef __AVX__
+#        undef __AVX2__
+#        undef __AVX512F__
+#        undef __AES__
+#        undef __VAES__
+
+#        define __SSE3__    1
+#        define __SSSE3__   1
+#        define __SSE4_1__  1
+#        define __AVX__     1
+#        define __AVX2__    1
+#        define __AVX512F__ 1
+#        define __AES__     1
+#        define __VAES__    1
+#    endif
+
+#endif
+
+#ifdef DISABLE_AVX2
+#    undef HAVE_AVXINTRIN_H
+#    undef HAVE_AVX2INTRIN_H
+#    undef HAVE_AVX512FINTRIN_H
+#    undef HAVE_VAESINTRIN_H
+#endif
+#ifdef DISABLE_AVX512
+#    undef HAVE_AVX512FINTRIN_H
 #endif
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__

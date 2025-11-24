@@ -34,7 +34,7 @@ var _ []byte
 //go:embed libaegis/src/aegis256x2/aegis256x2_avx2.h
 var _ []byte
 
-//go:embed libaegis/src/aegis256x2/aegis256x2_armcrypto.h
+//go:embed libaegis/src/aegis256x2/aegis256x2_neon_aes.h
 var _ []byte
 
 //go:embed libaegis/src/aegis256x4/aegis256x4_common.h
@@ -43,7 +43,7 @@ var _ []byte
 //go:embed libaegis/src/aegis256x4/aegis256x4_altivec.h
 var _ []byte
 
-//go:embed libaegis/src/aegis256x4/aegis256x4_armcrypto.h
+//go:embed libaegis/src/aegis256x4/aegis256x4_neon_aes.h
 var _ []byte
 
 //go:embed libaegis/src/aegis256x4/aegis256x4_avx2.h
@@ -82,7 +82,10 @@ var _ []byte
 //go:embed libaegis/src/include/aegis128x2.h
 var _ []byte
 
-//go:embed libaegis/src/aegis128l/aegis128l_armcrypto.h
+//go:embed libaegis/src/aegis128l/aegis128l_neon_aes.h
+var _ []byte
+
+//go:embed libaegis/src/aegis128l/aegis128l_neon_sha3.h
 var _ []byte
 
 //go:embed libaegis/src/aegis128l/aegis128l_aesni.h
@@ -121,7 +124,7 @@ var _ []byte
 //go:embed libaegis/src/aegis256/implementations.h
 var _ []byte
 
-//go:embed libaegis/src/aegis256/aegis256_armcrypto.h
+//go:embed libaegis/src/aegis256/aegis256_neon_aes.h
 var _ []byte
 
 //go:embed libaegis/src/aegis256/aegis256_soft.h
@@ -136,7 +139,7 @@ var _ []byte
 //go:embed libaegis/src/aegis128x4/aegis128x4_altivec.h
 var _ []byte
 
-//go:embed libaegis/src/aegis128x4/aegis128x4_armcrypto.h
+//go:embed libaegis/src/aegis128x4/aegis128x4_neon_aes.h
 var _ []byte
 
 //go:embed libaegis/src/aegis128x4/aegis128x4_soft.h
@@ -151,7 +154,7 @@ var _ []byte
 //go:embed libaegis/src/aegis128x4/aegis128x4_avx2.h
 var _ []byte
 
-//go:embed libaegis/src/aegis128x2/aegis128x2_armcrypto.h
+//go:embed libaegis/src/aegis128x2/aegis128x2_neon_aes.h
 var _ []byte
 
 //go:embed libaegis/src/aegis128x2/aegis128x2_altivec.h
@@ -178,7 +181,7 @@ var _ []byte
 //go:embed libaegis/src/aegis256x2/aegis256x2_soft.c
 var _ []byte
 
-//go:embed libaegis/src/aegis256x2/aegis256x2_armcrypto.c
+//go:embed libaegis/src/aegis256x2/aegis256x2_neon_aes.c
 var _ []byte
 
 //go:embed libaegis/src/aegis256x2/aegis256x2_avx2.c
@@ -193,7 +196,7 @@ var _ []byte
 //go:embed libaegis/src/aegis256x4/aegis256x4_altivec.c
 var _ []byte
 
-//go:embed libaegis/src/aegis256x4/aegis256x4_armcrypto.c
+//go:embed libaegis/src/aegis256x4/aegis256x4_neon_aes.c
 var _ []byte
 
 //go:embed libaegis/src/aegis256x4/aegis256x4_avx2.c
@@ -220,7 +223,10 @@ var _ []byte
 //go:embed libaegis/src/aegis128l/aegis128l_aesni.c
 var _ []byte
 
-//go:embed libaegis/src/aegis128l/aegis128l_armcrypto.c
+//go:embed libaegis/src/aegis128l/aegis128l_neon_aes.c
+var _ []byte
+
+//go:embed libaegis/src/aegis128l/aegis128l_neon_sha3.c
 var _ []byte
 
 //go:embed libaegis/src/aegis128l/aegis128l.c
@@ -241,7 +247,7 @@ var _ []byte
 //go:embed libaegis/src/aegis256/aegis256_soft.c
 var _ []byte
 
-//go:embed libaegis/src/aegis256/aegis256_armcrypto.c
+//go:embed libaegis/src/aegis256/aegis256_neon_aes.c
 var _ []byte
 
 //go:embed libaegis/src/aegis256/aegis256_aesni.c
@@ -265,7 +271,7 @@ var _ []byte
 //go:embed libaegis/src/aegis128x4/aegis128x4_altivec.c
 var _ []byte
 
-//go:embed libaegis/src/aegis128x4/aegis128x4_armcrypto.c
+//go:embed libaegis/src/aegis128x4/aegis128x4_neon_aes.c
 var _ []byte
 
 //go:embed libaegis/src/aegis128x4/aegis128x4.c
@@ -283,7 +289,7 @@ var _ []byte
 //go:embed libaegis/src/aegis128x2/aegis128x2_soft.c
 var _ []byte
 
-//go:embed libaegis/src/aegis128x2/aegis128x2_armcrypto.c
+//go:embed libaegis/src/aegis128x2/aegis128x2_neon_aes.c
 var _ []byte
 
 //go:embed libaegis/src/aegis128x2/aegis128x2_altivec.c

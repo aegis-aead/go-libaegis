@@ -13,7 +13,11 @@ int aegis_runtime_get_cpu_features(void);
 
 int aegis_runtime_has_neon(void);
 
-int aegis_runtime_has_armcrypto(void);
+int aegis_runtime_has_neon_aes(void);
+
+int aegis_runtime_has_neon_sha3(void);
+
+int aegis_runtime_has_sve2_aes(void);
 
 int aegis_runtime_has_avx(void);
 

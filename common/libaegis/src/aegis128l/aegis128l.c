@@ -6,14 +6,15 @@
 #include "aegis128l.h"
 #include "aegis128l_aesni.h"
 #include "aegis128l_altivec.h"
-#include "aegis128l_armcrypto.h"
+#include "aegis128l_neon_aes.h"
+#include "aegis128l_neon_sha3.h"
 
 #ifndef HAS_HW_AES
 #    include "aegis128l_soft.h"
 static const aegis128l_implementation *implementation = &aegis128l_soft_implementation;
 #else
 #    if defined(__aarch64__) || defined(_M_ARM64)
-static const aegis128l_implementation *implementation = &aegis128l_armcrypto_implementation;
+static const aegis128l_implementation *implementation = &aegis128l_neon_aes_implementation;
 #    elif defined(__x86_64__) || defined(__i386__)
 static const aegis128l_implementation *implementation = &aegis128l_aesni_implementation;
 #    elif defined(__ALTIVEC__) && defined(__CRYPTO__)
@@ -105,50 +106,35 @@ aegis128l_state_init(aegis128l_state *st_, const uint8_t *ad, size_t adlen, cons
 }
 
 int
-aegis128l_state_encrypt_update(aegis128l_state *st_, uint8_t *c, size_t clen_max, size_t *written,
-                               const uint8_t *m, size_t mlen)
+aegis128l_state_encrypt_update(aegis128l_state *st_, uint8_t *c, const uint8_t *m, size_t mlen)
 {
-    return implementation->state_encrypt_update(st_, c, clen_max, written, m, mlen);
+    return implementation->state_encrypt_update(st_, c, m, mlen);
 }
 
 int
-aegis128l_state_encrypt_detached_final(aegis128l_state *st_, uint8_t *c, size_t clen_max,
-                                       size_t *written, uint8_t *mac, size_t maclen)
+aegis128l_state_encrypt_final(aegis128l_state *st_, uint8_t *mac, size_t maclen)
 {
     if (maclen != 16 && maclen != 32) {
         errno = EINVAL;
         return -1;
     }
-    return implementation->state_encrypt_detached_final(st_, c, clen_max, written, mac, maclen);
+    return implementation->state_encrypt_final(st_, mac, maclen);
 }
 
 int
-aegis128l_state_encrypt_final(aegis128l_state *st_, uint8_t *c, size_t clen_max, size_t *written,
-                              size_t maclen)
+aegis128l_state_decrypt_update(aegis128l_state *st_, uint8_t *m, const uint8_t *c, size_t clen)
+{
+    return implementation->state_decrypt_update(st_, m, c, clen);
+}
+
+int
+aegis128l_state_decrypt_final(aegis128l_state *st_, const uint8_t *mac, size_t maclen)
 {
     if (maclen != 16 && maclen != 32) {
         errno = EINVAL;
         return -1;
     }
-    return implementation->state_encrypt_final(st_, c, clen_max, written, maclen);
-}
-
-int
-aegis128l_state_decrypt_detached_update(aegis128l_state *st_, uint8_t *m, size_t mlen_max,
-                                        size_t *written, const uint8_t *c, size_t clen)
-{
-    return implementation->state_decrypt_detached_update(st_, m, mlen_max, written, c, clen);
-}
-
-int
-aegis128l_state_decrypt_detached_final(aegis128l_state *st_, uint8_t *m, size_t mlen_max,
-                                       size_t *written, const uint8_t *mac, size_t maclen)
-{
-    if (maclen != 16 && maclen != 32) {
-        errno = EINVAL;
-        return -1;
-    }
-    return implementation->state_decrypt_detached_final(st_, m, mlen_max, written, mac, maclen);
+    return implementation->state_decrypt_final(st_, mac, maclen);
 }
 
 void
@@ -232,8 +218,12 @@ aegis128l_pick_best_implementation(void)
 #endif
 
 #if defined(__aarch64__) || defined(_M_ARM64)
-    if (aegis_runtime_has_armcrypto()) {
-        implementation = &aegis128l_armcrypto_implementation;
+    if (aegis_runtime_has_neon_sha3()) {
+        implementation = &aegis128l_neon_sha3_implementation;
+        return 0;
+    }
+    if (aegis_runtime_has_neon_aes()) {
+        implementation = &aegis128l_neon_aes_implementation;
         return 0;
     }
 #endif

@@ -22,7 +22,9 @@
 typedef struct CPUFeatures_ {
     int initialized;
     int has_neon;
-    int has_armcrypto;
+    int has_neon_aes;
+    int has_neon_sha3;
+    int has_sve2_aes;
     int has_avx;
     int has_avx2;
     int has_avx512f;
@@ -48,6 +50,49 @@ static CPUFeatures _cpu_features;
 #define XCR0_ZMM_HI256 0x00000040
 #define XCR0_HI16_ZMM  0x00000080
 
+// Define hwcap values ourselves: building with an old auxv header where these
+// hwcap values are not defined should not prevent features from being enabled.
+
+// Arm hwcaps.
+#define AEGIS_ARM_HWCAP_NEON (1L << 12)
+#define AEGIS_ARM_HWCAP2_AES (1L << 0)
+
+// AArch64 hwcaps.
+#define AEGIS_AARCH64_HWCAP_ASIMD   (1L << 1)
+#define AEGIS_AARCH64_HWCAP_AES     (1L << 3)
+#define AEGIS_AARCH64_HWCAP_SHA3    (1L << 17)
+#define AEGIS_AARCH64_HWCAP2_SVEAES (1L << 2)
+
+#if defined(__APPLE__) && defined(CPU_TYPE_ARM64) && defined(CPU_SUBTYPE_ARM64E)
+// sysctlbyname() parameter documentation for instruction set characteristics:
+// https://developer.apple.com/documentation/kernel/1387446-sysctlbyname/determining_instruction_set_characteristics
+static inline int __attribute__((unused))
+_have_arm_feature(const char *feature)
+{
+    int64_t feature_present = 0;
+    size_t  size            = sizeof(feature_present);
+    if (sysctlbyname(feature, &feature_present, &size, NULL, 0) != 0) {
+        return 0;
+    }
+    return feature_present;
+}
+
+#elif (defined(__arm__) || defined(__aarch64__) || defined(_M_ARM64)) && defined(AT_HWCAP)
+static inline int
+_have_hwcap(int hwcap_id, int bit)
+{
+    unsigned long buf = 0;
+#    ifdef HAVE_GETAUXVAL
+    buf = getauxval(hwcap_id);
+#    elif defined(HAVE_ELF_AUX_INFO)
+    if (elf_aux_info(hwcap_id, (void *) &buf, (int) sizeof buf) != 0) {
+        return 0;
+    }
+#    endif
+    return (buf & bit) != 0;
+}
+#endif
+
 static int
 _runtime_arm_cpu_features(CPUFeatures *const cpu_features)
 {
@@ -60,76 +105,62 @@ _runtime_arm_cpu_features(CPUFeatures *const cpu_features)
 #elif defined(HAVE_ANDROID_GETCPUFEATURES) && defined(ANDROID_CPU_ARM_FEATURE_NEON)
     cpu_features->has_neon = (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0x0;
 #elif (defined(__aarch64__) || defined(_M_ARM64)) && defined(AT_HWCAP)
-#    ifdef HAVE_GETAUXVAL
-    cpu_features->has_neon = (getauxval(AT_HWCAP) & (1L << 1)) != 0;
-#    elif defined(HAVE_ELF_AUX_INFO)
-    {
-        unsigned long buf;
-        if (elf_aux_info(AT_HWCAP, (void *) &buf, (int) sizeof buf) == 0) {
-            cpu_features->has_neon = (buf & (1L << 1)) != 0;
-        }
-    }
-#    endif
+    cpu_features->has_neon = _have_hwcap(AT_HWCAP, AEGIS_AARCH64_HWCAP_ASIMD);
 #elif defined(__arm__) && defined(AT_HWCAP)
-#    ifdef HAVE_GETAUXVAL
-    cpu_features->has_neon = (getauxval(AT_HWCAP) & (1L << 12)) != 0;
-#    elif defined(HAVE_ELF_AUX_INFO)
-    {
-        unsigned long buf;
-        if (elf_aux_info(AT_HWCAP, (void *) &buf, (int) sizeof buf) == 0) {
-            cpu_features->has_neon = (buf & (1L << 12)) != 0;
-        }
-    }
-#    endif
+    cpu_features->has_neon = _have_hwcap(AT_HWCAP, AEGIS_ARM_HWCAP_NEON);
 #endif
 
     if (cpu_features->has_neon == 0) {
         return 0;
     }
 
-#if __ARM_FEATURE_CRYPTO
-    cpu_features->has_armcrypto = 1;
+#if __ARM_FEATURE_CRYPTO || __ARM_FEATURE_AES
+    cpu_features->has_neon_aes = 1;
 #elif defined(_M_ARM64)
-    cpu_features->has_armcrypto =
-        1; /* assuming all CPUs supported by ARM Windows have the crypto extensions */
+    // Assuming all CPUs supported by Arm Windows have the crypto extensions.
+    cpu_features->has_neon_aes = 1;
 #elif defined(__APPLE__) && defined(CPU_TYPE_ARM64) && defined(CPU_SUBTYPE_ARM64E)
-    {
-        cpu_type_t    cpu_type;
-        cpu_subtype_t cpu_subtype;
-        size_t        cpu_type_len    = sizeof cpu_type;
-        size_t        cpu_subtype_len = sizeof cpu_subtype;
-
-        if (sysctlbyname("hw.cputype", &cpu_type, &cpu_type_len, NULL, 0) == 0 &&
-            cpu_type == CPU_TYPE_ARM64 &&
-            sysctlbyname("hw.cpusubtype", &cpu_subtype, &cpu_subtype_len, NULL, 0) == 0 &&
-            (cpu_subtype == CPU_SUBTYPE_ARM64E || cpu_subtype == CPU_SUBTYPE_ARM64_V8)) {
-            cpu_features->has_armcrypto = 1;
-        }
-    }
+    cpu_features->has_neon_aes = _have_arm_feature("hw.optional.arm.FEAT_AES");
 #elif defined(HAVE_ANDROID_GETCPUFEATURES) && defined(ANDROID_CPU_ARM_FEATURE_AES)
-    cpu_features->has_armcrypto = (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_AES) != 0x0;
+    cpu_features->has_neon_aes = (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_AES) != 0x0;
 #elif (defined(__aarch64__) || defined(_M_ARM64)) && defined(AT_HWCAP)
-#    ifdef HAVE_GETAUXVAL
-    cpu_features->has_armcrypto = (getauxval(AT_HWCAP) & (1L << 3)) != 0;
-#    elif defined(HAVE_ELF_AUX_INFO)
-    {
-        unsigned long buf;
-        if (elf_aux_info(AT_HWCAP, (void *) &buf, (int) sizeof buf) == 0) {
-            cpu_features->has_armcrypto = (buf & (1L << 3)) != 0;
-        }
-    }
-#    endif
+    cpu_features->has_neon_aes = _have_hwcap(AT_HWCAP, AEGIS_AARCH64_HWCAP_AES);
 #elif defined(__arm__) && defined(AT_HWCAP2)
-#    ifdef HAVE_GETAUXVAL
-    cpu_features->has_armcrypto = (getauxval(AT_HWCAP2) & (1L << 0)) != 0;
-#    elif defined(HAVE_ELF_AUX_INFO)
-    {
-        unsigned long buf;
-        if (elf_aux_info(AT_HWCAP2, (void *) &buf, (int) sizeof buf) == 0) {
-            cpu_features->has_armcrypto = (buf & (1L << 0)) != 0;
-        }
+    cpu_features->has_neon_aes = _have_hwcap(AT_HWCAP2, AEGIS_ARM_HWCAP2_AES);
+#endif
+
+    // The FEAT_SHA3 implementation assumes that FEAT_AES is also present.
+    if (cpu_features->has_neon_aes == 0) {
+        return 0;
     }
-#    endif
+
+    // At the time of writing Windows does not provide a mechanism for
+    // detecting FEAT_SHA3, however FEAT_SHA3 is mandatory if FEAT_SVE_AES is
+    // also implemented, so test that instead.
+#if __ARM_FEATURE_SHA3
+    cpu_features->has_neon_sha3 = 1;
+#elif defined(_M_ARM64) && defined(PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE)
+    cpu_features->has_neon_sha3 = IsProcessorFeaturePresent(PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE);
+#elif defined(__APPLE__) && defined(CPU_TYPE_ARM64) && defined(CPU_SUBTYPE_ARM64E)
+    cpu_features->has_neon_sha3 = _have_arm_feature("hw.optional.arm.FEAT_SHA3");
+#elif (defined(__aarch64__) || defined(_M_ARM64)) && defined(AT_HWCAP)
+    cpu_features->has_neon_sha3 = _have_hwcap(AT_HWCAP, AEGIS_AARCH64_HWCAP_SHA3);
+#endif
+
+    // The FEAT_SVE_AES implementation assumes that FEAT_AES and FEAT_SHA3 are
+    // also present.
+    if (cpu_features->has_neon_sha3 == 0) {
+        return 0;
+    }
+
+    // At the time of writing Apple Silicon platforms do not provide a
+    // mechanism for detecting FEAT_SVE_AES.
+#if __ARM_FEATURE_SVE2_AES
+    cpu_features->has_sve2_aes = 1;
+#elif defined(_M_ARM64) && defined(PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE)
+    cpu_features->has_sve2_aes = IsProcessorFeaturePresent(PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE);
+#elif (defined(__aarch64__) || defined(_M_ARM64)) && defined(AT_HWCAP)
+    cpu_features->has_sve2_aes = _have_hwcap(AT_HWCAP2, AEGIS_AARCH64_HWCAP2_SVEAES);
 #endif
 
     return 0;
@@ -293,9 +324,21 @@ aegis_runtime_has_neon(void)
 }
 
 int
-aegis_runtime_has_armcrypto(void)
+aegis_runtime_has_neon_aes(void)
 {
-    return _cpu_features.has_armcrypto;
+    return _cpu_features.has_neon_aes;
+}
+
+int
+aegis_runtime_has_neon_sha3(void)
+{
+    return _cpu_features.has_neon_sha3;
+}
+
+int
+aegis_runtime_has_sve2_aes(void)
+{
+    return _cpu_features.has_sve2_aes;
 }
 
 int

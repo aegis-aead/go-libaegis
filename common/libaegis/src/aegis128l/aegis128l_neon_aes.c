@@ -5,7 +5,7 @@
 
 #    include "../common/common.h"
 #    include "aegis128l.h"
-#    include "aegis128l_armcrypto.h"
+#    include "aegis128l_neon_aes.h"
 
 #    ifndef __ARM_FEATURE_CRYPTO
 #        define __ARM_FEATURE_CRYPTO 1
@@ -32,7 +32,7 @@ typedef uint8x16_t aes_block_t;
 #    define AES_BLOCK_LOAD(A)         vld1q_u8(A)
 #    define AES_BLOCK_LOAD_64x2(A, B) vreinterpretq_u8_u64(vsetq_lane_u64((A), vmovq_n_u64(B), 1))
 #    define AES_BLOCK_STORE(A, B)     vst1q_u8((A), (B))
-#    define AES_ENC(A, B)             veorq_u8(vaesmcq_u8(vaeseq_u8((A), vmovq_n_u8(0))), (B))
+#    define AES_ENC(A, B)             veorq_u8(vaesmcq_u8(vaeseq_u8(vmovq_n_u8(0), (A))), (B))
 
 static inline void
 aegis128l_update(aes_block_t *const state, const aes_block_t d1, const aes_block_t d2)
@@ -52,23 +52,22 @@ aegis128l_update(aes_block_t *const state, const aes_block_t d1, const aes_block
 
 #    include "aegis128l_common.h"
 
-struct aegis128l_implementation aegis128l_armcrypto_implementation = {
-    .encrypt_detached              = encrypt_detached,
-    .decrypt_detached              = decrypt_detached,
-    .encrypt_unauthenticated       = encrypt_unauthenticated,
-    .decrypt_unauthenticated       = decrypt_unauthenticated,
-    .stream                        = stream,
-    .state_init                    = state_init,
-    .state_encrypt_update          = state_encrypt_update,
-    .state_encrypt_detached_final  = state_encrypt_detached_final,
-    .state_encrypt_final           = state_encrypt_final,
-    .state_decrypt_detached_update = state_decrypt_detached_update,
-    .state_decrypt_detached_final  = state_decrypt_detached_final,
-    .state_mac_init                = state_mac_init,
-    .state_mac_update              = state_mac_update,
-    .state_mac_final               = state_mac_final,
-    .state_mac_reset               = state_mac_reset,
-    .state_mac_clone               = state_mac_clone,
+struct aegis128l_implementation aegis128l_neon_aes_implementation = {
+    .encrypt_detached        = encrypt_detached,
+    .decrypt_detached        = decrypt_detached,
+    .encrypt_unauthenticated = encrypt_unauthenticated,
+    .decrypt_unauthenticated = decrypt_unauthenticated,
+    .stream                  = stream,
+    .state_init              = state_init,
+    .state_encrypt_update    = state_encrypt_update,
+    .state_encrypt_final     = state_encrypt_final,
+    .state_decrypt_update    = state_decrypt_update,
+    .state_decrypt_final     = state_decrypt_final,
+    .state_mac_init          = state_mac_init,
+    .state_mac_update        = state_mac_update,
+    .state_mac_final         = state_mac_final,
+    .state_mac_reset         = state_mac_reset,
+    .state_mac_clone         = state_mac_clone,
 };
 
 #    ifdef __clang__

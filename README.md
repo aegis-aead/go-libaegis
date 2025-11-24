@@ -9,6 +9,7 @@ A Go binding for [libaegis](https://github.com/aegis-aead/libaegis), implementin
 
 - Provides a Go wrapper around `libaegis` for seamless integration.
 - Implements AEGIS-128L, AEGIS-128X, AEGIS-256 and AEGIS-256X.
+- Supports both one-shot and incremental (streaming) encryption/decryption.
 - Optimized for modern CPUs with hardware acceleration.
 - Lightweight and easy to use within Go applications.
 
@@ -59,6 +60,63 @@ func main() {
     fmt.Println("Decrypted message:", string(decrypted))
 }
 ```
+
+### Incremental encryption/decryption
+
+For large messages or streaming scenarios, use the incremental API to process data in chunks:
+
+```go
+package main
+
+import (
+    "crypto/rand"
+    "fmt"
+    "github.com/aegis-aead/go-libaegis/aegis128l"
+)
+
+func main() {
+    key := make([]byte, aegis128l.KeySize)
+    rand.Read(key)
+
+    nonce := make([]byte, aegis128l.NonceSize)
+    rand.Read(nonce)
+
+    associatedData := []byte("metadata")
+    tagLen := 16
+
+    // Incremental encryption
+    enc, err := aegis128l.NewEncrypter(key, nonce, associatedData, tagLen)
+    if err != nil {
+        panic(err)
+    }
+
+    // Encrypt data in chunks - ciphertext is output immediately
+    ciphertext1 := enc.Encrypt([]byte("Hello, "))
+    ciphertext2 := enc.Encrypt([]byte("world!"))
+    tag := enc.Final()
+
+    // Incremental decryption
+    dec, err := aegis128l.NewDecrypter(key, nonce, associatedData, tagLen)
+    if err != nil {
+        panic(err)
+    }
+
+    // Decrypt chunks - but don't use plaintext until Final succeeds!
+    plaintext1 := dec.Decrypt(ciphertext1)
+    plaintext2 := dec.Decrypt(ciphertext2)
+
+    // Verify authentication tag
+    if err := dec.Final(tag); err != nil {
+        // Authentication failed - discard all decrypted data
+        panic("authentication failed")
+    }
+
+    // Now it's safe to use the plaintext
+    fmt.Println("Decrypted:", string(plaintext1)+string(plaintext2))
+}
+```
+
+The incremental API is interoperable with the one-shot API: `ciphertext || tag` from incremental encryption equals the output of `Seal()`.
 
 ## Requirements
 

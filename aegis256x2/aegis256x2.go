@@ -61,23 +61,13 @@ func (aead *Aegis256X2) Seal(dst, nonce, cleartext, additionalData []byte) []byt
 	}
 
 	outLen := len(cleartext) + aead.TagLen
-	var buf []byte
-	inplace := false
-	if cap(dst)-len(dst) >= outLen {
-		inplace = true
-		buf = dst[len(dst) : len(dst)+outLen]
-	} else {
-		buf = make([]byte, outLen)
-	}
-	res := C.aegis256x2_encrypt((*C.uchar)(&buf[0]), C.size_t(aead.TagLen), slicePointerOrNull(cleartext),
+	ret, out := common.GrowSlice(dst, outLen)
+	res := C.aegis256x2_encrypt((*C.uchar)(&out[0]), C.size_t(aead.TagLen), slicePointerOrNull(cleartext),
 		C.size_t(len(cleartext)), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
 	if res != 0 {
 		panic("encryption failed")
 	}
-	if inplace {
-		return dst[:len(dst)+outLen]
-	}
-	return append(dst, buf...)
+	return ret
 }
 
 func (aead *Aegis256X2) Open(plaintext, nonce, ciphertext, additionalData []byte) ([]byte, error) {
@@ -101,23 +91,13 @@ func (aead *Aegis256X2) Open(plaintext, nonce, ciphertext, additionalData []byte
 	}
 
 	outLen := len(ciphertext) - aead.TagLen
-	var buf []byte
-	inplace := false
-	if cap(plaintext)-len(plaintext) >= outLen {
-		inplace = true
-		buf = plaintext[len(plaintext) : len(plaintext)+outLen]
-	} else {
-		buf = make([]byte, len(ciphertext)-aead.TagLen)
-	}
-	res := C.aegis256x2_decrypt(slicePointerOrNull(buf), (*C.uchar)(&ciphertext[0]),
+	ret, out := common.GrowSlice(plaintext, outLen)
+	res := C.aegis256x2_decrypt(slicePointerOrNull(out), (*C.uchar)(&ciphertext[0]),
 		C.size_t(len(ciphertext)), C.size_t(aead.TagLen), slicePointerOrNull(additionalData), C.size_t(len(additionalData)), (*C.uchar)(&nonce[0]), (*C.uchar)(&aead.Key[0]))
 	if res != 0 {
 		return nil, common.ErrAuth
 	}
-	if inplace {
-		return plaintext[:len(plaintext)+outLen], nil
-	}
-	return append(plaintext, buf...), nil
+	return ret, nil
 }
 
 func slicePointerOrNull(s []byte) (ptr *C.uchar) {

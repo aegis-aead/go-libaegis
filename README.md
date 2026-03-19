@@ -10,6 +10,7 @@ A Go binding for [libaegis](https://github.com/aegis-aead/libaegis), implementin
 - Provides a Go wrapper around `libaegis` for seamless integration.
 - Implements AEGIS-128L, AEGIS-128X, AEGIS-256 and AEGIS-256X.
 - Supports both one-shot and incremental (streaming) encryption/decryption.
+- Random-access encrypted file I/O (RAF) with per-chunk authentication.
 - Optimized for modern CPUs with hardware acceleration.
 - Lightweight and easy to use within Go applications.
 
@@ -117,6 +118,56 @@ func main() {
 ```
 
 The incremental API is interoperable with the one-shot API: `ciphertext || tag` from incremental encryption equals the output of `Seal()`.
+
+### Random-access encrypted files (RAF)
+
+The `raf` package provides random-access read/write on encrypted files. Data is split into independently authenticated chunks, so you can read or write at any offset without decrypting the entire file.
+
+```go
+package main
+
+import (
+    "crypto/rand"
+    "fmt"
+    "os"
+
+    "github.com/aegis-aead/go-libaegis/raf"
+)
+
+func main() {
+    key := make([]byte, 32) // AEGIS-256 uses 32-byte keys
+    rand.Read(key)
+
+    f, _ := os.Create("secret.raf")
+    defer f.Close()
+
+    store := raf.NewFileStore(f)
+    ef, _ := raf.Create(store, key, &raf.Options{
+        Algorithm: raf.AEGIS256,
+        ChunkSize: 65536,
+    })
+
+    ef.WriteAt([]byte("hello, world"), 0)
+
+    buf := make([]byte, 12)
+    ef.ReadAt(buf, 0)
+    fmt.Println(string(buf)) // "hello, world"
+
+    ef.Close()
+}
+```
+
+Opening an existing file auto-detects the algorithm and chunk size from the header:
+
+```go
+store := raf.NewFileStore(f)
+ef, _ := raf.Open(store, key, nil)
+defer ef.Close()
+```
+
+You can also inspect the header without a key using `raf.Probe(store)`.
+
+The `raf.File` type implements `io.ReaderAt`, `io.WriterAt`, and `io.Closer`. It is not safe for concurrent use; callers needing concurrent access must synchronize externally.
 
 ## Requirements
 

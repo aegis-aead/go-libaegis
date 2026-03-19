@@ -18,12 +18,24 @@
 #    endif
 #endif
 
+#ifndef AEGIS_WARN_UNUSED_RESULT
+#    if defined(__GNUC__) || defined(__clang__)
+#        define AEGIS_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#    elif defined(_MSC_VER)
+#        define AEGIS_WARN_UNUSED_RESULT _Check_return_
+#    else
+#        define AEGIS_WARN_UNUSED_RESULT
+#    endif
+#endif
+
 #include "aegis128l.h"
 #include "aegis128x2.h"
 #include "aegis128x4.h"
 #include "aegis256.h"
 #include "aegis256x2.h"
 #include "aegis256x4.h"
+
+#include "aegis_raf.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +58,8 @@ int aegis_init(void);
  *
  * Returns 0 if the blocks are equal, -1 otherwise.
  */
-int aegis_verify_16(const uint8_t *x, const uint8_t *y) __attribute__((warn_unused_result));
+AEGIS_WARN_UNUSED_RESULT
+int aegis_verify_16(const uint8_t *x, const uint8_t *y);
 
 /* Compare two 32-byte blocks for equality.
  *
@@ -54,7 +67,8 @@ int aegis_verify_16(const uint8_t *x, const uint8_t *y) __attribute__((warn_unus
  *
  * Returns 0 if the blocks are equal, -1 otherwise.
  */
-int aegis_verify_32(const uint8_t *x, const uint8_t *y) __attribute__((warn_unused_result));
+AEGIS_WARN_UNUSED_RESULT
+int aegis_verify_32(const uint8_t *x, const uint8_t *y);
 
 #ifdef __cplusplus
 }

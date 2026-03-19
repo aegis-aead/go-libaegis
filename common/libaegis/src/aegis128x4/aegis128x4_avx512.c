@@ -10,7 +10,7 @@
 #    ifdef HAVE_VAESINTRIN_H
 
 #        ifdef __clang__
-#            if __clang_major__ >= 18
+#            if __clang_major__ >= 18 && __clang_major__ < 22
 #                pragma clang attribute push(__attribute__((target("aes,vaes,avx512f,evex512"))), \
                                              apply_to = function)
 #            else

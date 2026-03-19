@@ -3,7 +3,7 @@
 
 typedef aes_block_t aegis_blocks[8];
 
-static void
+static inline void
 aegis128x2_init(const uint8_t *key, const uint8_t *nonce, aes_block_t *const state)
 {
     static CRYPTO_ALIGN(AES_BLOCK_LENGTH) const uint8_t c0_[AES_BLOCK_LENGTH] = {
@@ -56,7 +56,7 @@ aegis128x2_init(const uint8_t *key, const uint8_t *nonce, aes_block_t *const sta
     }
 }
 
-static void
+static inline void
 aegis128x2_mac(uint8_t *mac, size_t maclen, uint64_t adlen, uint64_t mlen, aes_block_t *const state)
 {
     uint8_t     mac_multi_0[AES_BLOCK_LENGTH];
@@ -131,7 +131,7 @@ aegis128x2_squeeze_keystream(uint8_t *const dst, aes_block_t *const state)
     AES_BLOCK_STORE(dst + AES_BLOCK_LENGTH, tmp1);
 }
 
-static void
+static inline void
 aegis128x2_enc(uint8_t *const dst, const uint8_t *const src, aes_block_t *const state)
 {
     aes_block_t msg0, msg1;
@@ -151,7 +151,7 @@ aegis128x2_enc(uint8_t *const dst, const uint8_t *const src, aes_block_t *const 
     aegis128x2_update(state, msg0, msg1);
 }
 
-static void
+static inline void
 aegis128x2_dec(uint8_t *const dst, const uint8_t *const src, aes_block_t *const state)
 {
     aes_block_t msg0, msg1;
@@ -170,7 +170,7 @@ aegis128x2_dec(uint8_t *const dst, const uint8_t *const src, aes_block_t *const 
     aegis128x2_update(state, msg0, msg1);
 }
 
-static void
+static inline void
 aegis128x2_declast(uint8_t *const dst, const uint8_t *const src, size_t len,
                    aes_block_t *const state)
 {
@@ -200,7 +200,7 @@ aegis128x2_declast(uint8_t *const dst, const uint8_t *const src, size_t len,
     aegis128x2_update(state, msg0, msg1);
 }
 
-static void
+static inline void
 aegis128x2_mac_nr(uint8_t *mac, size_t maclen, uint64_t adlen, aes_block_t *state)
 {
     uint8_t     t[2 * AES_BLOCK_LENGTH];
@@ -447,8 +447,6 @@ state_init(aegis128x2_state *st_, const uint8_t *ad, size_t adlen, const uint8_t
         (_aegis128x2_state *) ((((uintptr_t) &st_->opaque) + (ALIGNMENT - 1)) &
                                ~(uintptr_t) (ALIGNMENT - 1));
     size_t i;
-
-    memcpy(blocks, st->blocks, sizeof blocks);
 
     COMPILER_ASSERT((sizeof *st) + ALIGNMENT <= sizeof *st_);
     st->mlen = 0;

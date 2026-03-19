@@ -5,6 +5,10 @@
 
 #include "common.h"
 
+/* Namespacing to avoid conflicts with libsodium */
+#define softaes_block_encrypt libaegis_softaes_block_encrypt
+#define _aes_lut              libaegis__aes_lut
+
 typedef struct SoftAesBlock {
     uint32_t w0;
     uint32_t w1;

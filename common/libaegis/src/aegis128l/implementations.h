@@ -6,6 +6,13 @@
 
 #include "aegis128l.h"
 
+/* Namespacing to avoid conflicts with libsodium */
+#define aegis128l_soft_implementation      libaegis_aegis128l_soft_implementation
+#define aegis128l_aesni_implementation     libaegis_aegis128l_aesni_implementation
+#define aegis128l_neon_aes_implementation  libaegis_aegis128l_neon_aes_implementation
+#define aegis128l_neon_sha3_implementation libaegis_aegis128l_neon_sha3_implementation
+#define aegis128l_altivec_implementation   libaegis_aegis128l_altivec_implementation
+
 typedef struct aegis128l_implementation {
     int (*encrypt_detached)(uint8_t *c, uint8_t *mac, size_t maclen, const uint8_t *m, size_t mlen,
                             const uint8_t *ad, size_t adlen, const uint8_t *npub, const uint8_t *k);

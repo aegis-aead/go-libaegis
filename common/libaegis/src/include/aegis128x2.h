@@ -88,9 +88,10 @@ int aegis128x2_encrypt_detached(uint8_t *c, uint8_t *mac, size_t maclen, const u
  *
  * Returns 0 if the ciphertext is authentic, -1 otherwise.
  */
+AEGIS_WARN_UNUSED_RESULT
 int aegis128x2_decrypt_detached(uint8_t *m, const uint8_t *c, size_t clen, const uint8_t *mac,
                                 size_t maclen, const uint8_t *ad, size_t adlen, const uint8_t *npub,
-                                const uint8_t *k) __attribute__((warn_unused_result));
+                                const uint8_t *k);
 
 /*
  * Encrypt a message with AEGIS in one shot mode, returning the tag and the ciphertext together.
@@ -121,9 +122,9 @@ int aegis128x2_encrypt(uint8_t *c, size_t maclen, const uint8_t *m, size_t mlen,
  *
  * Returns 0 if the ciphertext is authentic, -1 otherwise.
  */
+AEGIS_WARN_UNUSED_RESULT
 int aegis128x2_decrypt(uint8_t *m, const uint8_t *c, size_t clen, size_t maclen, const uint8_t *ad,
-                       size_t adlen, const uint8_t *npub, const uint8_t *k)
-    __attribute__((warn_unused_result));
+                       size_t adlen, const uint8_t *npub, const uint8_t *k);
 
 /*
  * Initialize a state for incremental encryption or decryption.
@@ -175,8 +176,9 @@ int aegis128x2_state_encrypt_final(aegis128x2_state *st_, uint8_t *mac, size_t m
  *
  * Return 0 on success, -1 on failure.
  */
+AEGIS_WARN_UNUSED_RESULT
 int aegis128x2_state_decrypt_update(aegis128x2_state *st_, uint8_t *m, const uint8_t *c,
-                                    size_t clen) __attribute__((warn_unused_result));
+                                    size_t clen);
 
 /*
  * Finalize the incremental decryption and verify the authentication tag.
@@ -191,8 +193,8 @@ int aegis128x2_state_decrypt_update(aegis128x2_state *st_, uint8_t *m, const uin
  *
  * Return 0 if the tag is valid, -1 otherwise.
  */
-int aegis128x2_state_decrypt_final(aegis128x2_state *st_, const uint8_t *mac, size_t maclen)
-    __attribute__((warn_unused_result));
+AEGIS_WARN_UNUSED_RESULT
+int aegis128x2_state_decrypt_final(aegis128x2_state *st_, const uint8_t *mac, size_t maclen);
 
 /*
  * Return a deterministic pseudo-random byte sequence.

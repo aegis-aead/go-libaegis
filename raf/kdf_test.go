@@ -3,11 +3,56 @@ package raf
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/hex"
 	"strings"
 	"testing"
 
 	"github.com/aegis-aead/go-libaegis/common"
 )
+
+// Known-answer vectors from the upstream libaegis test suite
+func TestDeriveMasterKeyVectors(t *testing.T) {
+	if !common.Available {
+		t.Skip("CGO not available")
+	}
+
+	vectors := []struct {
+		name      string
+		masterKey string
+		context   string
+		want      string
+	}{
+		{
+			name:      "128-bit",
+			masterKey: "000102030405060708090a0b0c0d0e0f",
+			context:   "test-context",
+			want:      "fb80072c5a6f1cddc6e97b35ed1f3bf3",
+		},
+		{
+			name:      "256-bit",
+			masterKey: "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+			context:   "test-context",
+			want:      "fee2d3cc58c69d8f43fd7b4e33eaec0053539685c7e284e6e12ee9c4f423d136",
+		},
+	}
+
+	for _, tc := range vectors {
+		t.Run(tc.name, func(t *testing.T) {
+			masterKey, err := hex.DecodeString(tc.masterKey)
+			if err != nil {
+				t.Fatalf("bad master key vector: %v", err)
+			}
+
+			got, err := DeriveMasterKey(masterKey, tc.context)
+			if err != nil {
+				t.Fatalf("DeriveMasterKey: %v", err)
+			}
+			if hex.EncodeToString(got) != tc.want {
+				t.Fatalf("derived %x, want %s", got, tc.want)
+			}
+		})
+	}
+}
 
 func TestDeriveMasterKeyDeterministic(t *testing.T) {
 	if !common.Available {

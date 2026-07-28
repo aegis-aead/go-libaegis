@@ -79,6 +79,9 @@ var _ []byte
 //go:embed libaegis/src/include/aegis.h
 var _ []byte
 
+//go:embed libaegis/src/include/aegis_raf.h
+var _ []byte
+
 //go:embed libaegis/src/include/aegis128x2.h
 var _ []byte
 
@@ -110,6 +113,18 @@ var _ []byte
 var _ []byte
 
 //go:embed libaegis/src/common/cpu.h
+var _ []byte
+
+//go:embed libaegis/src/common/keccak.h
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_internal.h
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_merkle.h
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_variant.h
 var _ []byte
 
 //go:embed libaegis/src/aegis256/aegis256_altivec.h
@@ -241,6 +256,9 @@ var _ []byte
 //go:embed libaegis/src/common/softaes.c
 var _ []byte
 
+//go:embed libaegis/src/common/keccak.c
+var _ []byte
+
 //go:embed libaegis/src/aegis256/aegis256.c
 var _ []byte
 
@@ -293,6 +311,33 @@ var _ []byte
 var _ []byte
 
 //go:embed libaegis/src/aegis128x2/aegis128x2_altivec.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_kdf.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_merkle.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_aegis128l.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_aegis128x2.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_aegis128x4.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_aegis256.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_aegis256x2.c
+var _ []byte
+
+//go:embed libaegis/src/raf/raf_aegis256x4.c
 var _ []byte
 
 //go:embed libaegis/LICENSE

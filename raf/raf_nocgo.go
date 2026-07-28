@@ -24,6 +24,11 @@ func Probe(store Store) (*FileInfo, error) {
 	return nil, nil
 }
 
+func DeriveMasterKey(masterKey []byte, context string) ([]byte, error) {
+	common.NotAvailable()
+	return nil, nil
+}
+
 func (f *File) ReadAt(p []byte, off int64) (int, error) {
 	common.NotAvailable()
 	return 0, nil

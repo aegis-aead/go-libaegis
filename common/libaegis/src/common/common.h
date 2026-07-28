@@ -24,8 +24,8 @@ static int errno;
 #ifdef __ANDROID_API__
 #    if __ANDROID_API__ < 18
 #        undef HAVE_GETAUXVAL
+#        define HAVE_ANDROID_GETCPUFEATURES
 #    endif
-#    define HAVE_ANDROID_GETCPUFEATURES
 #endif
 #if defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_AMD64)
 #    define HAVE_CPUID

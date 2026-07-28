@@ -295,6 +295,32 @@ int    aegis256x4_raf_scratch_validate(const aegis_raf_scratch *scratch, uint32_
 size_t aegis_raf_merkle_buffer_size(const aegis_raf_merkle_config *cfg);
 
 /*
+ * Derive a context-bound RAF master key from an application master key.
+ *
+ * Produces a deterministic RAF-scoped subkey by combining the application
+ * master key with a caller-supplied context string. The derived key can
+ * then be passed to any *_raf_create() or *_raf_open() API.
+ *
+ * Using different contexts with the same master key produces different
+ * RAF subkeys, so different RAF files or file families can be isolated
+ * without requiring separate master keys.
+ *
+ * out_len and master_key_len must both be 16 (for 128-bit variants) or
+ * 32 (for 256-bit variants), and must match each other. context may be
+ * NULL if context_len is 0; an empty context still derives a RAF-scoped
+ * subkey (it does not copy the master key through unchanged).
+ *
+ * context_len must not exceed 120 bytes for 128-bit keys or 72 bytes
+ * for 256-bit keys (limited by the internal KDF block size).
+ *
+ * The caller is responsible for zeroizing the derived key buffer after use.
+ *
+ * Returns 0 on success, -1 on error with errno set to EINVAL.
+ */
+int aegis_raf_derive_master_key(uint8_t *out, size_t out_len, const uint8_t *master_key,
+                                size_t master_key_len, const uint8_t *context, size_t context_len);
+
+/*
  * Random-Access Encrypted File API
  *
  * Provides pread/pwrite-style access to encrypted files. Files are divided

@@ -169,6 +169,15 @@ You can also inspect the header without a key using `raf.Probe(store)`.
 
 The `raf.File` type implements `io.ReaderAt`, `io.WriterAt`, and `io.Closer`. It is not safe for concurrent use; callers needing concurrent access must synchronize externally.
 
+If you keep a single application master key, `raf.DeriveMasterKey` gives you a separate RAF key per context, so unrelated files stay cryptographically isolated without extra key management:
+
+```go
+photos, _ := raf.DeriveMasterKey(masterKey, "photos")
+videos, _ := raf.DeriveMasterKey(masterKey, "videos")
+```
+
+The derived key has the same length as the master key, and derivation is deterministic, so you only need to store the master key.
+
 ## Requirements
 
 - Go 1.19+

@@ -161,7 +161,25 @@ var (
 
 	// ErrNegativeOffset is returned when a negative offset or size is passed.
 	ErrNegativeOffset = errors.New("raf: negative offset or size")
+
+	// ErrContextTooLong is returned by DeriveMasterKey when the context
+	// exceeds what MaxContextLen allows for the given key length.
+	ErrContextTooLong = errors.New("raf: context too long")
 )
+
+// MaxContextLen returns the longest context DeriveMasterKey accepts for a
+// master key of keyLen bytes. The limit comes from the block size of the
+// underlying KDF. It returns 0 for unsupported key lengths.
+func MaxContextLen(keyLen int) int {
+	switch keyLen {
+	case 16:
+		return 120
+	case 32:
+		return 72
+	default:
+		return 0
+	}
+}
 
 // cAlgID maps Algorithm to the C AEGIS_RAF_ALG_* constant.
 func cAlgID(a Algorithm) int {

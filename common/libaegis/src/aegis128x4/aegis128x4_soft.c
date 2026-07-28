@@ -55,27 +55,11 @@ AES_BLOCK_STORE(uint8_t *a, const aes_block_t b)
     softaes_block_store(a + 48, b.b3);
 }
 
-static inline aes_block_t
-AES_ENC(const aes_block_t a, const aes_block_t b)
-{
-    return (aes_block_t) { softaes_block_encrypt(a.b0, b.b0), softaes_block_encrypt(a.b1, b.b1),
-                           softaes_block_encrypt(a.b2, b.b2), softaes_block_encrypt(a.b3, b.b3) };
-}
-
 static inline void
 aegis128x4_update(aes_block_t *const state, const aes_block_t d1, const aes_block_t d2)
 {
-    aes_block_t tmp;
-
-    tmp      = state[7];
-    state[7] = AES_ENC(state[6], state[7]);
-    state[6] = AES_ENC(state[5], state[6]);
-    state[5] = AES_ENC(state[4], state[5]);
-    state[4] = AES_ENC(state[3], state[4]);
-    state[3] = AES_ENC(state[2], state[3]);
-    state[2] = AES_ENC(state[1], state[2]);
-    state[1] = AES_ENC(state[0], state[1]);
-    state[0] = AES_ENC(tmp, state[0]);
+    COMPILER_ASSERT(sizeof(aes_block_t) == 4 * sizeof(SoftAesBlock));
+    softaes_aegis_rotate8_x4((SoftAesBlock *) (void *) state);
 
     state[0] = AES_BLOCK_XOR(state[0], d1);
     state[4] = AES_BLOCK_XOR(state[4], d2);
